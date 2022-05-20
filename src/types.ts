@@ -1,0 +1,1 @@
+export type Cy =  Cypress.Cypress

@@ -1,6 +1,7 @@
 import { Project, ProjectOptions, InterfaceDeclaration, JSDoc, SyntaxKind, ParameterDeclaration } from "ts-morph";
 import {existsSync, readFileSync} from 'fs'
 import { join } from "path";
+import { Cy } from "./types";
 
 
 export function detectDirectory(): string | undefined {
@@ -38,6 +39,7 @@ export function setupModuleAndInterface(file: string, options: ProjectOptions = 
 }
 
 export interface FunctionDefinition {
+  file: string;
   name: string;
   docs: string;
   returnType: string;
@@ -87,6 +89,7 @@ export function extractCommandTypes(file: string): FunctionDefinition[] {
   
   const fns = s.getFunctions().filter((f) => f.hasExportKeyword()).map((fn) => {
     return {
+      file,
       name: fn.getName(),
       docs: processComments(fn.getJsDocs()),
       returnType: fn.getReturnType().getText(),
@@ -98,12 +101,13 @@ export function extractCommandTypes(file: string): FunctionDefinition[] {
 }
 
 /**
- * Receives the Interface `i` and a set of files to look in for exports in. This function
- * modifies the Interface definition _in place_ and therefore return is _void_.
+ * add all commands -- cross-file -- to the interface definition
  */
-export function addCommandsToInterface(i: InterfaceDeclaration, files: string[]) {
+export function addCommandsToInterface(i: InterfaceDeclaration, files: string[]): FunctionDefinition[] {
   const fns = files.flatMap(f => extractCommandTypes(f));
+  const symbols: FunctionDefinition[] = []
   fns.forEach((fn) => {
+    symbols.push(fn)
     i.addMethod({
       name: fn.name || "unknown",
       leadingTrivia: fn.docs,
@@ -111,6 +115,17 @@ export function addCommandsToInterface(i: InterfaceDeclaration, files: string[])
       parameters: fn.parameters,
     });
   });
+
+  return symbols
 }
 
-
+/**
+ * Uses the passed-in Cypress commands to "add" each function to the runtime
+ * environment.
+ */
+export async function addCommandsToRuntime(cy: Cy, fns: FunctionDefinition[]) {
+  const files = Array.from(new Set<string>( fns.map(i => i.file)))
+  files.forEach(f => {
+    
+  })
+}

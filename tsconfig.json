@@ -11,7 +11,7 @@
     "moduleResolution": "node",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["vite/client", "node", "vitest"],
+    "types": ["vite/client", "node", "vitest", "cypress"],
   },
   "include": ["src", "test", "vite.config.ts"],
   "exclude": ["node_modules"]

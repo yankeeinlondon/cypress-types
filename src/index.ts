@@ -1,16 +1,17 @@
-import { Plugin } from "vite";
+import {  Plugin } from "vite";
 import { join } from "node:path"
-import { addCommandsToInterface, detectDirectory, setupModuleAndInterface } from "./helpers";
+import { addCommandsToInterface, addCommandsToRuntime, detectDirectory, setupModuleAndInterface } from "./helpers";
+import {  Cy } from "./types";
 
 /**
  * Vite Plugin which builds types file for your custom commands in Cypress
  */
-export default function CypressCommands() {
+export default function CypressCommands(cypress: Cy): Plugin {
   const directory = detectDirectory() || 'cypress/support'
   const fileGlob = `${join(process.cwd(), directory, "**/!(*.d).ts")}`
   const cypressFile = join(process.cwd(),  directory, "cypress.d.ts");
 
-  return {
+  return ({
     name: "cypress-types",
     enforce: "pre",
     // ensure types recomputed at build
@@ -32,11 +33,12 @@ export default function CypressCommands() {
       if(ctx.file.startsWith(directory) && ctx.file.includes('.ts') || !ctx.file.includes('.d.ts')) {
         const watchFiles = Object.keys(import.meta.glob(fileGlob))
         const { p, i } = setupModuleAndInterface(cypressFile);
-        addCommandsToInterface(i, watchFiles);
+        const fns = addCommandsToInterface(i, watchFiles);
+        await addCommandsToRuntime(cypress, fns)
         await p.save();
       }
     }
-  } as Plugin;
+  })
 }
 
 
